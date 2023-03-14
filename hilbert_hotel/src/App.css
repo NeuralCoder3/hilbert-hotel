@@ -37,3 +37,8 @@
     transform: rotate(360deg);
   }
 }
+
+@font-face {
+  font-family: 'xkcd';
+  src: local("xkcd"), url(./fonts/xkcd.otf) format("opentype");
+}

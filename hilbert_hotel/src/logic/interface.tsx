@@ -7,6 +7,13 @@ export interface GuestDomainMin {
   image: string;
 }
 
+export interface TextPosition {
+  x: number;
+  y: number;
+  angle: number;
+  fontSize: number;
+}
+
 export interface GuestDomain extends GuestDomainMin {
   enumerator: ((bound: number) => any[]);
 }
@@ -17,6 +24,16 @@ export function get_parameter_text(domain: GuestDomain): string {
 
 export function get_parameter_code(domain: GuestDomain): string {
   return "[" + get_parameter_text(domain) + "]";
+}
+
+export function domain_to_string(domain: GuestDomain, element: any): string {
+  if (domain.parameter.length === 0) {
+    return "";
+  } else if (domain.parameter.length === 1) {
+    return element.toString();
+  } else {
+    return "(" + element.join(", ") + ")";
+  }
 }
 
 export function get_sample(domain: GuestDomain): any[] {
@@ -32,6 +49,21 @@ export function get_sample(domain: GuestDomain): any[] {
 }
 
 
+export interface HotelGuest {
+  room: number
+};
+export interface BusGuest {
+  seat: number,
+};
+
+export type Guest = HotelGuest | BusGuest;
+
+export interface GuestAssignment {
+  guest: Guest;
+  room: number;
+};
+
+
 // checker takes domain, the two assignments
 // and provides functions to check the assignments
 export type room_result = number[] | "unknown" | ["unsure", number[]];
@@ -41,7 +73,7 @@ export abstract class Checker {
     public hotelGuestAssignment: ((n: number) => number),
     public busGuestAssignment: ((a: any) => number)) { }
 
-  abstract checkCodomains(): any[] | "unknown";
+  abstract checkCodomains(): GuestAssignment[] | "unknown";
   abstract checkEmptyRooms(many?: boolean): room_result;
   abstract checkOverbooking(many?: boolean): room_result;
 }

@@ -1,14 +1,16 @@
 import { TextField, Button, Grid, Select, InputLabel, NativeSelect } from '@material-ui/core';
 import './App.css';
 import React, { useEffect } from 'react';
-import { guest_selection } from './logic/constants';
-import { GuestDomain, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
+import { guest_selection, guest_to_string } from './logic/constants';
+import { Guest, GuestAssignment, GuestDomain, domain_to_string, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
 import { EnumerationChecker } from './logic/enumeration_checker';
 import hotel_image from './img/hotel.png';
+import domain_issue_image from './img/invalid.png';
+import empty_room_image from './img/empty.png';
+import overbooked_image from './img/overbooked.png';
+import { domainIssueText, emptyRoomText, overbookedText } from './logic/constants';
 
 function App() {
-
-
   const get_domain = (name: string) => guest_selection.find((guest) => guest.name === name) as GuestDomain;
 
   const [guests, setGuests] = React.useState<GuestDomain>(get_domain("nat"));
@@ -80,6 +82,58 @@ function App() {
     busGuestAssignment.current = assignment;
   }, [busGuestString, guests]);
 
+  // const [domainIssues, setDomainIssues] = React.useState<[string, number][]>([["ABC", 42]]);
+  const [domainIssues, setDomainIssues] = React.useState<GuestAssignment[]>([]);
+  const [emptyRooms, setEmptyRooms] = React.useState<number[]>([]);
+  const [overbooking, setOverbooking] = React.useState<number[]>([]);
+  const trimCount = 10;
+
+  const checkAssignment = (
+    hotelGuestAssignment: ((n: number) => number),
+    busGuestAssignment: ((n: any) => number),
+    guests: GuestDomain
+  ) => {
+    console.log("hotelGuestAssignment", hotelGuestAssignment);
+    console.log("busGuestAssignment", busGuestAssignment);
+    console.log("guests", guests);
+
+    // setDomainIssues([]);
+    // setEmptyRooms([]);
+    // setOverbooking([]);
+
+    const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000);
+
+    console.log("Check domain");
+    const invalid_rooms = checker.checkCodomains();
+    console.log("Domain check result: ", invalid_rooms);
+    if (invalid_rooms !== "unknown" && invalid_rooms.length > 0) {
+      console.log("Domain issues: ", invalid_rooms, typeof invalid_rooms, invalid_rooms.length);
+      console.log("Element 0", invalid_rooms[0]);
+      // const text_issues: [string, number][] = invalid_rooms.map(([issue, room]: [any, number]) => [domain_to_string(guests, issue), room]);
+      // const text_issues: [string, number][] = invalid_rooms.map(([issue, room]: [any, number]) => [issue.toString(), room]);
+      // const text_issues: [string, number][] = invalid_rooms.map((assignment: GuestAssignment) => ["A", 42]);
+      // console.log("Text issues: ", text_issues, typeof text_issues, text_issues.length);
+      // setDomainIssues(text_issues);
+      setDomainIssues(invalid_rooms);
+      // setDomainIssues((prev) => {
+      //   console.log("set domain issues", prev, invalid_rooms);
+      //   // return text_issues;
+      //   return invalid_rooms;
+      // });
+      setEmptyRooms([]);
+      setOverbooking([]);
+      return;
+    }
+
+    console.log("Check empty rooms");
+    const empty_rooms_check = checker.checkEmptyRooms();
+    console.log("Empty rooms check result: ", empty_rooms_check);
+
+    console.log("Check overbooking");
+    const overbooking_check = checker.checkOverbooking();
+    console.log("Overbooking check result: ", overbooking_check);
+  };
+
   const clickAssign = () => {
     // console.log("hotelGuestAssignment", hotelGuestAssignment.current);
     // console.log("busGuestAssignment", busGuestAssignment.current);
@@ -94,30 +148,8 @@ function App() {
     checkAssignment(hotelGuestAssignment.current, busGuestAssignment.current, guests);
   };
 
-  const checkAssignment = (
-    hotelGuestAssignment: ((n: number) => number),
-    busGuestAssignment: ((n: any) => number),
-    guests: GuestDomain
-  ) => {
-    console.log("hotelGuestAssignment", hotelGuestAssignment);
-    console.log("busGuestAssignment", busGuestAssignment);
-    console.log("guests", guests);
-
-    const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000);
-
-    console.log("Check domain");
-    const domain_check = checker.checkCodomains();
-    console.log("Domain check result: ", domain_check);
-
-    console.log("Check empty rooms");
-    const empty_rooms_check = checker.checkEmptyRooms();
-    console.log("Empty rooms check result: ", empty_rooms_check);
-
-    console.log("Check overbooking");
-    const overbooking_check = checker.checkOverbooking();
-    console.log("Overbooking check result: ", overbooking_check);
-  };
-
+  console.log("render");
+  console.log("domainIssues:", domainIssues.length > 0, domainIssues);
 
   return (
     <div className="App">
@@ -193,6 +225,78 @@ function App() {
           <img src={hotel_image} alt="hotel" />
         </Grid>
       </Grid>
+      {/* {domainIssues.join(", ") === "" && emptyRooms.join(", ")} */}
+      {
+        domainIssues.length > 0 &&
+        <div>
+          <h2 style={{
+            fontFamily: "xkcd",
+          }}
+          >Assignment Issues</h2>
+          {/* <img src={domain_issue_image} alt="domain issue" /> */}
+          <div
+            style={{
+              WebkitBoxAlign: 'center',
+              WebkitBoxPack: 'center',
+              display: '-webkit-box',
+              width: '100%',
+            }}
+          >
+            <div style={{
+              position: 'relative',
+              textAlign: 'center',
+              justifyContent: 'center',
+              width: 'fit-content',
+              // left: "50 %",
+              // transform: "translateX(-50 %)",
+            }}>
+              <div
+                style={{
+                }}
+              >
+                <img src={domain_issue_image} alt="domain issue" />
+              </div>
+              {
+                domainIssueText.map((textposition, i) =>
+                  <div key={i}
+                    style={{
+                      position: 'absolute',
+                      top: textposition.y + "px",
+                      left: textposition.x + "px",
+                      color: 'black',
+                      fontSize: textposition.fontSize + 'px',
+                      transform: "translate(-50%, -50%)",
+                      rotate: -textposition.angle + 'deg',
+                      fontFamily: "xkcd"
+                    }}>
+                    {([domainIssues[0].room])[i]}
+                  </div>
+                )
+              }
+            </div>
+          </div>
+          <p>
+            The following issues were found in the domains: &nbsp;
+            <span style={{
+              fontFamily: "xkcd",
+            }}
+            >
+              {/* <ul>
+                {
+                  domainIssues.splice(0, trimCount).map(([issue, room], i) =>
+                    <li key={i}>
+                      {issue} {"->"} {room}
+                    </li>
+                  )
+                }
+                {domainIssues.length > trimCount && <li>...</li>}
+              </ul> */}
+              {domainIssues.splice(0, trimCount).map((assignment) => guest_to_string(guests, assignment.guest) + " -> " + assignment.room).join(", ")}
+              {domainIssues.length > trimCount && ", ..."}
+            </span>
+          </p>
+        </div>
+      }
     </div >
   );
 }

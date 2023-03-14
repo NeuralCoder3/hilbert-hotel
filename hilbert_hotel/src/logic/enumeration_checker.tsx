@@ -1,5 +1,5 @@
 import { hotelGuestEnumerator, roomConstraint } from './constants';
-import { Checker, GuestDomain, room_result } from './interface';
+import { Checker, Guest, GuestAssignment, GuestDomain, room_result } from './interface';
 
 export class EnumerationChecker extends Checker {
 
@@ -21,15 +21,17 @@ export class EnumerationChecker extends Checker {
     this.busGuests = domain.enumerator(bound);
   }
 
-  checkCodomains(): any[] | "unknown" {
+  checkCodomains(): GuestAssignment[] | "unknown" {
     for (const hotelGuest of this.hotelGuests) {
-      if (!roomConstraint(this.hotelGuestAssignment(hotelGuest))) {
-        return [hotelGuest];
+      const room = this.hotelGuestAssignment(hotelGuest);
+      if (!roomConstraint(room)) {
+        return [{ guest: { room: hotelGuest }, room }];
       }
     }
     for (const busGuest of this.busGuests) {
-      if (!roomConstraint(this.busGuestAssignment(busGuest))) {
-        return [busGuest];
+      const room = this.busGuestAssignment(busGuest);
+      if (!roomConstraint(room)) {
+        return [{ guest: { seat: busGuest }, room }];
       }
     }
     return [];
