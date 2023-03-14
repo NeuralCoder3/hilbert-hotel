@@ -190,7 +190,8 @@ function App() {
     if (room > 0) {
       rooms.push((room - 1).toString());
     } else {
-      rooms.push("0");
+      // rooms.push("Office");
+      rooms.push("");
     }
     for (let i = 0; i < middleCount; i++) {
       rooms.push(room.toString());

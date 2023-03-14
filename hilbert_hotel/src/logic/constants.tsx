@@ -96,7 +96,7 @@ export const emptyRoomText: TextPosition[] = [
   {
     x: 128,
     y: 500,
-    angle: 20,
+    angle: 30,
     fontSize: 25
   },
   {
