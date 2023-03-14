@@ -2,7 +2,7 @@ import { TextField, Button, Grid, Select, InputLabel, NativeSelect } from '@mate
 import './App.css';
 import React, { useEffect } from 'react';
 import { guest_selection, guest_to_string } from './logic/constants';
-import { Guest, GuestAssignment, GuestDomain, domain_to_string, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
+import { Guest, GuestAssignment, GuestDomain, TextPosition, domain_to_string, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
 import { EnumerationChecker } from './logic/enumeration_checker';
 import hotel_image from './img/hotel.png';
 import domain_issue_image from './img/invalid.png';
@@ -85,7 +85,7 @@ function App() {
   // const [domainIssues, setDomainIssues] = React.useState<[string, number][]>([["ABC", 42]]);
   const [domainIssues, setDomainIssues] = React.useState<GuestAssignment[]>([]);
   const [emptyRooms, setEmptyRooms] = React.useState<number[]>([]);
-  const [overbooking, setOverbooking] = React.useState<number[]>([]);
+  const [overbookedRooms, setOverbookedRooms] = React.useState<number[]>([]);
   const trimCount = 10;
 
   const checkAssignment = (
@@ -101,42 +101,37 @@ function App() {
     // setEmptyRooms([]);
     // setOverbooking([]);
 
-    const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000);
+    const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000, true);
 
     console.log("Check domain");
     const invalid_rooms = checker.checkCodomains();
     console.log("Domain check result: ", invalid_rooms);
     if (invalid_rooms !== "unknown" && invalid_rooms.length > 0) {
+      // TODO: fix issue with strict mode not updating domain issue (and logging invalid_rooms as object of length 1 without content)
       console.log("Domain issues: ", invalid_rooms, typeof invalid_rooms, invalid_rooms.length);
       console.log("Element 0", invalid_rooms[0]);
-      // const text_issues: [string, number][] = invalid_rooms.map(([issue, room]: [any, number]) => [domain_to_string(guests, issue), room]);
-      // const text_issues: [string, number][] = invalid_rooms.map(([issue, room]: [any, number]) => [issue.toString(), room]);
-      // const text_issues: [string, number][] = invalid_rooms.map((assignment: GuestAssignment) => ["A", 42]);
-      // console.log("Text issues: ", text_issues, typeof text_issues, text_issues.length);
-      // setDomainIssues(text_issues);
       setDomainIssues(invalid_rooms);
-      // setDomainIssues((prev) => {
-      //   console.log("set domain issues", prev, invalid_rooms);
-      //   // return text_issues;
-      //   return invalid_rooms;
-      // });
       setEmptyRooms([]);
-      setOverbooking([]);
+      setOverbookedRooms([]);
       return;
     }
 
     console.log("Check empty rooms");
     const empty_rooms_check = checker.checkEmptyRooms();
+    if (empty_rooms_check !== "unknown") {
+      setEmptyRooms(empty_rooms_check.rooms);
+    }
     console.log("Empty rooms check result: ", empty_rooms_check);
 
     console.log("Check overbooking");
     const overbooking_check = checker.checkOverbooking();
+    if (overbooking_check !== "unknown") {
+      setOverbookedRooms(overbooking_check.rooms);
+    }
     console.log("Overbooking check result: ", overbooking_check);
   };
 
   const clickAssign = () => {
-    // console.log("hotelGuestAssignment", hotelGuestAssignment.current);
-    // console.log("busGuestAssignment", busGuestAssignment.current);
     if (hotelGuestAssignment.current === undefined || hotelGuestAssignmentError) {
       alert("Please enter a valid assignment for the hotel guests.");
       return;
@@ -148,8 +143,62 @@ function App() {
     checkAssignment(hotelGuestAssignment.current, busGuestAssignment.current, guests);
   };
 
-  console.log("render");
-  console.log("domainIssues:", domainIssues.length > 0, domainIssues);
+  const renderImage = (image: string, textpositions: TextPosition[], text: string[]) => {
+    return (<div
+      style={{
+        WebkitBoxAlign: 'center',
+        WebkitBoxPack: 'center',
+        display: '-webkit-box',
+        width: '100%',
+      }}
+    >
+      <div style={{
+        position: 'relative',
+        textAlign: 'center',
+        justifyContent: 'center',
+        width: 'fit-content',
+      }}>
+        <div
+          style={{
+          }}
+        >
+          <img src={image} alt="domain issue" />
+        </div>
+        {
+          textpositions.map((textposition, i) =>
+            <div key={i}
+              style={{
+                position: 'absolute',
+                top: textposition.y + "px",
+                left: textposition.x + "px",
+                color: 'black',
+                fontSize: textposition.fontSize + 'px',
+                transform: "translate(-50%, -50%)",
+                rotate: (-textposition.angle) + 'deg',
+                fontFamily: "xkcd"
+              }}>
+              {text[i]}
+            </div>
+          )
+        }
+      </div>
+    </div>);
+  };
+
+  const surrounding_rooms = (room: number, middleCount: number = 0) => {
+    const rooms = [];
+    if (room > 0) {
+      rooms.push((room - 1).toString());
+    } else {
+      rooms.push("0");
+    }
+    for (let i = 0; i < middleCount; i++) {
+      rooms.push(room.toString());
+    }
+    rooms.push((room + 1).toString());
+    return rooms;
+  };
+
 
   return (
     <div className="App">
@@ -233,48 +282,7 @@ function App() {
             fontFamily: "xkcd",
           }}
           >Assignment Issues</h2>
-          {/* <img src={domain_issue_image} alt="domain issue" /> */}
-          <div
-            style={{
-              WebkitBoxAlign: 'center',
-              WebkitBoxPack: 'center',
-              display: '-webkit-box',
-              width: '100%',
-            }}
-          >
-            <div style={{
-              position: 'relative',
-              textAlign: 'center',
-              justifyContent: 'center',
-              width: 'fit-content',
-              // left: "50 %",
-              // transform: "translateX(-50 %)",
-            }}>
-              <div
-                style={{
-                }}
-              >
-                <img src={domain_issue_image} alt="domain issue" />
-              </div>
-              {
-                domainIssueText.map((textposition, i) =>
-                  <div key={i}
-                    style={{
-                      position: 'absolute',
-                      top: textposition.y + "px",
-                      left: textposition.x + "px",
-                      color: 'black',
-                      fontSize: textposition.fontSize + 'px',
-                      transform: "translate(-50%, -50%)",
-                      rotate: -textposition.angle + 'deg',
-                      fontFamily: "xkcd"
-                    }}>
-                    {([domainIssues[0].room])[i]}
-                  </div>
-                )
-              }
-            </div>
-          </div>
+          {renderImage(domain_issue_image, domainIssueText, [domainIssues[0].room.toString()])}
           <p>
             The following issues were found in the domains: &nbsp;
             <span style={{
@@ -297,6 +305,51 @@ function App() {
           </p>
         </div>
       }
+      {
+        emptyRooms.length > 0 ?
+          (<div>
+            <h2 style={{
+              fontFamily: "xkcd",
+            }}
+            >Empty Rooms</h2>
+            {renderImage(empty_room_image, emptyRoomText, surrounding_rooms(emptyRooms[0], 0))}
+            <p>
+              The following rooms are empty: &nbsp;
+              <span style={{
+                fontFamily: "xkcd",
+              }}
+              >
+                {emptyRooms.splice(0, trimCount).join(", ")}
+                {emptyRooms.length > trimCount && ", ..."}
+              </span>
+            </p>
+          </div>)
+          :
+          (domainIssues.length === 0 && "You did a great job! All rooms are occupied.")
+      }
+      {
+        overbookedRooms.length > 0 ?
+          (<div>
+            <h2 style={{
+              fontFamily: "xkcd",
+            }}
+            >Empty Rooms</h2>
+            {renderImage(overbooked_image, overbookedText, surrounding_rooms(overbookedRooms[0], 3))}
+            <p>
+              The following rooms are overbooked: &nbsp;
+              <span style={{
+                fontFamily: "xkcd",
+              }}
+              >
+                {overbookedRooms.splice(0, trimCount).join(", ")}
+                {overbookedRooms.length > trimCount && ", ..."}
+              </span>
+            </p>
+          </div>)
+          :
+          (domainIssues.length === 0 && "You did a great job! No room is overbooked.")
+      }
+
     </div >
   );
 }

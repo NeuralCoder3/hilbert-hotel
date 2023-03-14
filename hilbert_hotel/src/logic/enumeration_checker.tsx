@@ -1,5 +1,5 @@
 import { hotelGuestEnumerator, roomConstraint } from './constants';
-import { Checker, Guest, GuestAssignment, GuestDomain, room_result } from './interface';
+import { Checker, Guest, GuestAssignment, GuestDomain, room_results } from './interface';
 
 export class EnumerationChecker extends Checker {
 
@@ -58,7 +58,7 @@ export class EnumerationChecker extends Checker {
     }
   }
 
-  checkEmptyRooms(many?: boolean | undefined): room_result {
+  checkEmptyRooms(many?: boolean | undefined): room_results {
 
     // can not check (order might be reversed) => 
     // TODO: under or over approximate?
@@ -70,15 +70,21 @@ export class EnumerationChecker extends Checker {
       this.computeBookedRooms();
       const check_rooms = Array.from(Array(Math.floor(this.bound / 10)).keys());
       const empty_rooms = check_rooms.filter(room => !this.bookedRooms!.has(room));
-      return empty_rooms;
+      return {
+        determination: "unsure",
+        rooms: empty_rooms
+      };
     }
     return "unknown";
   }
 
-  checkOverbooking(many?: boolean | undefined): room_result {
+  checkOverbooking(many?: boolean | undefined): room_results {
     this.computeBookedRooms();
     const overbooked = Array.from(this.overbookedRooms!);
-    return overbooked;
+    return {
+      determination: "sure",
+      rooms: overbooked
+    };
   }
 
 };

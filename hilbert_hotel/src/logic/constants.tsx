@@ -96,13 +96,13 @@ export const emptyRoomText: TextPosition[] = [
   {
     x: 128,
     y: 500,
-    angle: 30,
+    angle: 20,
     fontSize: 25
   },
   {
     x: 830,
     y: 200,
-    angle: 25,
+    angle: 15,
     fontSize: 20
   }
 ];
@@ -111,19 +111,31 @@ export const overbookedText: TextPosition[] = [
   {
     x: 120,
     y: 500,
-    angle: 30,
+    angle: 20,
     fontSize: 25
   },
   {
     x: 515,
     y: 320,
-    angle: 30,
+    angle: 20,
+    fontSize: 20
+  },
+  {
+    x: 490,
+    y: 515,
+    angle: 20,
+    fontSize: 20
+  },
+  {
+    x: 573,
+    y: 480,
+    angle: 20,
     fontSize: 20
   },
   {
     x: 825,
     y: 200,
-    angle: 25,
+    angle: 15,
     fontSize: 15
   },
 ];

@@ -66,7 +66,11 @@ export interface GuestAssignment {
 
 // checker takes domain, the two assignments
 // and provides functions to check the assignments
-export type room_result = number[] | "unknown" | ["unsure", number[]];
+export interface _room_results {
+  determination: "unsure" | "sure";
+  rooms: number[];
+}
+export type room_results = "unknown" | _room_results;
 
 export abstract class Checker {
   constructor(public domain: GuestDomain,
@@ -74,6 +78,6 @@ export abstract class Checker {
     public busGuestAssignment: ((a: any) => number)) { }
 
   abstract checkCodomains(): GuestAssignment[] | "unknown";
-  abstract checkEmptyRooms(many?: boolean): room_result;
-  abstract checkOverbooking(many?: boolean): room_result;
+  abstract checkEmptyRooms(many?: boolean): room_results;
+  abstract checkOverbooking(many?: boolean): room_results;
 }
