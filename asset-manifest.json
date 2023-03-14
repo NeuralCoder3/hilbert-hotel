@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/hilbert_hotel/static/css/main.bbabd1fb.css",
+    "main.js": "/hilbert_hotel/static/js/main.c1ad4bc5.js",
+    "static/js/787.366288e9.chunk.js": "/hilbert_hotel/static/js/787.366288e9.chunk.js",
+    "static/media/inf_bus.png": "/hilbert_hotel/static/media/inf_bus.b73f8796846bcfa807b6.png",
+    "static/media/xkcd.otf": "/hilbert_hotel/static/media/xkcd.3342fb912df8c89c3abd.otf",
+    "static/media/overbooked.png": "/hilbert_hotel/static/media/overbooked.945674df4a3af6e83cbd.png",
+    "static/media/empty.png": "/hilbert_hotel/static/media/empty.ae8c9f29babd168a683a.png",
+    "static/media/two_bus.png": "/hilbert_hotel/static/media/two_bus.f3440970bf49f6749a93.png",
+    "static/media/hotel.png": "/hilbert_hotel/static/media/hotel.eacb743b827b8e0e3319.png",
+    "static/media/bus.png": "/hilbert_hotel/static/media/bus.5973bcc202c3bfe62dd1.png",
+    "static/media/invalid.png": "/hilbert_hotel/static/media/invalid.be45fd328bde354fa162.png",
+    "static/media/two.png": "/hilbert_hotel/static/media/two.6334116c2200973ea4cc.png",
+    "static/media/one.png": "/hilbert_hotel/static/media/one.2e776c57115918443045.png",
+    "index.html": "/hilbert_hotel/index.html",
+    "main.bbabd1fb.css.map": "/hilbert_hotel/static/css/main.bbabd1fb.css.map",
+    "main.c1ad4bc5.js.map": "/hilbert_hotel/static/js/main.c1ad4bc5.js.map",
+    "787.366288e9.chunk.js.map": "/hilbert_hotel/static/js/787.366288e9.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.bbabd1fb.css",
+    "static/js/main.c1ad4bc5.js"
+  ]
+}
