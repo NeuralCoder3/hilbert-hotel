@@ -2,8 +2,9 @@ import { TextField, Button, Grid, Select, InputLabel, NativeSelect } from '@mate
 import './App.css';
 import React, { useEffect } from 'react';
 import { guest_selection } from './logic/constants';
-import { GuestDomain } from './logic/interface';
+import { GuestDomain, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
 import { EnumerationChecker } from './logic/enumeration_checker';
+import hotel_image from './img/hotel.png';
 
 function App() {
 
@@ -69,7 +70,7 @@ function App() {
     //   setBusGuestAssignmentError(false);
     //   return;
     // }
-    const assignment = checkFunction<any, number>("(" + guests.parameter + ") => ", busGuestString, guests.sample);
+    const assignment = checkFunction<any, number>("(" + get_parameter_code(guests) + ") => ", busGuestString, get_sample(guests));
     setBusGuestAssignmentError(assignment === null);
     if (assignment === null) {
       busGuestAssignment.current = undefined;
@@ -106,15 +107,15 @@ function App() {
 
     console.log("Check domain");
     const domain_check = checker.checkCodomains();
-    console.log("Domain check result: " + domain_check);
+    console.log("Domain check result: ", domain_check);
 
     console.log("Check empty rooms");
     const empty_rooms_check = checker.checkEmptyRooms();
-    console.log("Empty rooms check result: " + empty_rooms_check);
+    console.log("Empty rooms check result: ", empty_rooms_check);
 
     console.log("Check overbooking");
     const overbooking_check = checker.checkOverbooking();
-    console.log("Overbooking check result: " + overbooking_check);
+    console.log("Overbooking check result: ", overbooking_check);
   };
 
 
@@ -167,7 +168,7 @@ function App() {
             />
           </Grid>
           <Grid item xs={12}>
-            <TextField id="bus_guests" label={"Bus guest assignment g(" + guests.parameter_text + ") :="} variant="outlined"
+            <TextField id="bus_guests" label={"Bus guest assignment g(" + get_parameter_text(guests) + ") :="} variant="outlined"
               value={busGuestString}
               onChange={(e) => setBusGuestString(e.target.value)}
               error={busGuestAssignmentError}
@@ -183,6 +184,15 @@ function App() {
           </Grid>
         </Grid>
       </div >
+      {/* domain image on the left, hotel image on the right */}
+      <Grid container spacing={1}>
+        <Grid item xs={6}>
+          <img src={guests.image} alt="domain" />
+        </Grid>
+        <Grid item xs={6}>
+          <img src={hotel_image} alt="hotel" />
+        </Grid>
+      </Grid>
     </div >
   );
 }

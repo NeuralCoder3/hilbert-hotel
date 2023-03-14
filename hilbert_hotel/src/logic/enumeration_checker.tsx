@@ -1,15 +1,18 @@
 import { hotelGuestEnumerator, roomConstraint } from './constants';
-import { Checker, GuestDomain } from './interface';
+import { Checker, GuestDomain, room_result } from './interface';
 
 export class EnumerationChecker extends Checker {
 
   private hotelGuests: number[];
   private busGuests: any[];
+  private bookedRooms: Set<number> | undefined;
+  private overbookedRooms: Set<number> | undefined;
 
   constructor(domain: GuestDomain,
     hotelGuestAssignment: ((n: number) => number),
     busGuestAssignment: ((a: any) => number),
-    public bound: number = 100
+    private bound: number = 100,
+    private assumeLinear: boolean = false
   ) {
     super(domain, hotelGuestAssignment, busGuestAssignment);
 
@@ -18,51 +21,61 @@ export class EnumerationChecker extends Checker {
     this.busGuests = domain.enumerator(bound);
   }
 
-  checkCodomains(): any {
+  checkCodomains(): any[] | "unknown" {
     for (const hotelGuest of this.hotelGuests) {
       if (!roomConstraint(this.hotelGuestAssignment(hotelGuest))) {
-        return hotelGuest;
+        return [hotelGuest];
       }
     }
     for (const busGuest of this.busGuests) {
       if (!roomConstraint(this.busGuestAssignment(busGuest))) {
-        return busGuest;
+        return [busGuest];
       }
     }
-    return null;
+    return [];
   }
 
-  checkEmptyRooms(many?: boolean | undefined): number[] | null {
+  computeBookedRooms() {
+    if (this.bookedRooms && this.overbookedRooms)
+      return;
+    this.bookedRooms = new Set<number>();
+    this.overbookedRooms = new Set<number>();
+    for (const hotelGuest of this.hotelGuests) {
+      const room = this.hotelGuestAssignment(hotelGuest);
+      if (this.bookedRooms.has(room)) {
+        this.overbookedRooms.add(room);
+      }
+      this.bookedRooms.add(room);
+    }
+    for (const busGuest of this.busGuests) {
+      const room = this.busGuestAssignment(busGuest);
+      if (this.bookedRooms.has(room)) {
+        this.overbookedRooms.add(room);
+      }
+      this.bookedRooms.add(room);
+    }
+  }
+
+  checkEmptyRooms(many?: boolean | undefined): room_result {
 
     // can not check (order might be reversed) => 
     // TODO: under or over approximate?
     // under approximation: we can say nothing about empty rooms
-    return null;
+    // return null;
     // over approximation: assume that the first bound/10 rooms are non-empty (requires bound to be large and assignment to be close to linear)
     // throw new Error('Method not implemented.');
+    if (this.assumeLinear) {
+      this.computeBookedRooms();
+      const check_rooms = Array.from(Array(Math.floor(this.bound / 10)).keys());
+      const empty_rooms = check_rooms.filter(room => !this.bookedRooms!.has(room));
+      return empty_rooms;
+    }
+    return "unknown";
   }
 
-  checkOverbooking(many?: boolean | undefined): number[] | null {
-    let bookedRooms = new Set<number>();
-    let overbookedRooms = new Set<number>();
-    for (const hotelGuest of this.hotelGuests) {
-      const room = this.hotelGuestAssignment(hotelGuest);
-      if (bookedRooms.has(room)) {
-        overbookedRooms.add(room);
-      }
-      bookedRooms.add(room);
-    }
-    for (const busGuest of this.busGuests) {
-      const room = this.busGuestAssignment(busGuest);
-      if (bookedRooms.has(room)) {
-        overbookedRooms.add(room);
-      }
-      bookedRooms.add(room);
-    }
-    const overbooked = Array.from(overbookedRooms);
-    if (overbooked.length === 0) {
-      return null;
-    }
+  checkOverbooking(many?: boolean | undefined): room_result {
+    this.computeBookedRooms();
+    const overbooked = Array.from(this.overbookedRooms!);
     return overbooked;
   }
 
