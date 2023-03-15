@@ -67,7 +67,7 @@ export interface GuestAssignment {
 // checker takes domain, the two assignments
 // and provides functions to check the assignments
 export interface _room_results {
-  determination: "unsure" | "sure";
+  determination: "unsure" | "sure" | "certain";
   rooms: number[];
 }
 export type room_results = "unknown" | _room_results;

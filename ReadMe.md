@@ -98,5 +98,43 @@ assert(f m = n)
 ```
 
 
+## Brute Force
+
+Alternatively, we can enumerate a subset of guests.
+By its nature, this enumeration is incomplete.
+
+We can detect the existence of overbooked rooms with certainty.
+However, we can not prove the absense. 
+
+We can not conclude anything about empty rooms.
+The absense of empty rooms would need to enumerate all infinite assignments.
+For the existance, we would need to be sure that no (untested) guest will be assigned to the room.
+
+### Approximation
+
+For overbooking, we assume our sampling domain to be sufficient.
+That is, if we do not detect an overbooking in our sampling, we assume that no overbooking happens at all.
+
+For empty rooms, we introduce an internal switch to assume linearity.
+Using linearity, we assume that our sampling domain is large enough to assign at least a portion of the first rooms.
+
+We combine our analysis with a certainty to be able to overwrite results with more certain ones.
+
+### Fuzzing
+
+The enumeration approach can be extended by informed fuzzing techniques to enumerate more (possibly relevant) points.
 
 
+## Symbolic Computation
+
+Sympy
+Equivalence
+Inverse
+
+
+## TODO
+
+- [ ] Implement a fuzzer checker
+- [ ] Extract constants to augment the fuzzer
+- [ ] Use symbolic mathematics
+- [ ] Implement an SMT checker

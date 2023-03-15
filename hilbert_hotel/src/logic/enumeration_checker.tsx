@@ -71,7 +71,7 @@ export class EnumerationChecker extends Checker {
       const check_rooms = Array.from(Array(Math.floor(this.bound / 10)).keys());
       const empty_rooms = check_rooms.filter(room => !this.bookedRooms!.has(room));
       return {
-        determination: "unsure",
+        determination: "unsure", // needs uncertain assumptions
         rooms: empty_rooms
       };
     }
@@ -82,7 +82,7 @@ export class EnumerationChecker extends Checker {
     this.computeBookedRooms();
     const overbooked = Array.from(this.overbookedRooms!);
     return {
-      determination: "sure",
+      determination: "sure", // as sure as we can be
       rooms: overbooked
     };
   }

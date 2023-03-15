@@ -1,27 +1,54 @@
-import { TextField, Button, Grid, Select, InputLabel, NativeSelect } from '@material-ui/core';
+import { TextField, Button, Grid, InputLabel, NativeSelect } from '@material-ui/core';
 import './App.css';
 import React, { useEffect } from 'react';
 import { guest_selection, guest_to_string } from './logic/constants';
-import { Guest, GuestAssignment, GuestDomain, TextPosition, domain_to_string, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
+import { GuestAssignment, GuestDomain, TextPosition, get_parameter_code, get_parameter_text, get_sample } from './logic/interface';
 import { EnumerationChecker } from './logic/enumeration_checker';
 import hotel_image from './img/hotel.png';
 import domain_issue_image from './img/invalid.png';
 import empty_room_image from './img/empty.png';
 import overbooked_image from './img/overbooked.png';
 import { domainIssueText, emptyRoomText, overbookedText } from './logic/constants';
+import { SMTChecker } from './logic/smt_checker';
+import { init } from 'z3-solver';
 
 function App() {
+
+
+  useEffect(() => {
+    async function _aux() {
+      const { Context } = await init();
+
+      // console.log(Context);
+      // console.log(Context("main"));
+
+      const { Solver, Int, And, ToInt } = Context('main');
+
+      const x = Int.const('x');
+
+      console.log(Solver);
+      console.log(And);
+      console.log(x);
+      console.log(Int.val(0));
+      console.log(x.eq(0));
+      // console.log(x.ge(Int.val(0)));
+      const solver = new Solver();
+      // solver.add(And(x.ge(0), x.le(9)));
+      // console.log(await solver.check());
+      // sat
+    }
+    _aux();
+  }, []);
+
   const get_domain = (name: string) => guest_selection.find((guest) => guest.name === name) as GuestDomain;
 
   const [guests, setGuests] = React.useState<GuestDomain>(get_domain("nat"));
   const [hotelGuestString, setHotelGuestString] = React.useState<string>('');
-  // const [hotelGuestAssignment, setHotelGuestAssignment] = React.useState<((n: number) => number) | undefined>(undefined);
   const hotelGuestAssignment = React.useRef<((n: number) => number)>();
   const [hotelGuestAssignmentError, setHotelGuestAssignmentError] = React.useState<boolean>(true);
 
   const [busGuestString, setBusGuestString] = React.useState<string>('');
   // a state does not work due to iteration issues for multi parameter functions (and is not the right way to do it anyway)
-  // const [busGuestAssignment, setBusGuestAssignment] = React.useState<((n: any) => number) | undefined>(undefined);
   const busGuestAssignment = React.useRef<((a: any) => number)>();
   const [busGuestAssignmentError, setBusGuestAssignmentError] = React.useState<boolean>(true);
 
@@ -32,6 +59,7 @@ function App() {
     if (f_str === undefined)
       return null;
     try {
+      // eslint-disable-next-line
       const f = eval(f_str) as (n: T) => U;
       if (f === undefined)
         return null;
@@ -52,37 +80,25 @@ function App() {
   };
 
   useEffect(() => {
-    // if (hotelGuestString === '') {
-    //   setHotelGuestAssignmentError(false);
-    //   return;
-    // }
     const assignment = checkFunction<number, number>("(n) => ", hotelGuestString, 0);
     setHotelGuestAssignmentError(assignment === null);
     if (assignment === null) {
-      // setHotelGuestAssignment(undefined);
       hotelGuestAssignment.current = undefined;
       return;
     }
-    // setHotelGuestAssignment(assignment);
     hotelGuestAssignment.current = assignment;
   }, [hotelGuestString, guests]);
 
   useEffect(() => {
-    // if (busGuestString === '') {
-    //   setBusGuestAssignmentError(false);
-    //   return;
-    // }
     const assignment = checkFunction<any, number>("(" + get_parameter_code(guests) + ") => ", busGuestString, get_sample(guests));
     setBusGuestAssignmentError(assignment === null);
     if (assignment === null) {
       busGuestAssignment.current = undefined;
       return;
     }
-    // setBusGuestAssignment(assignment);
     busGuestAssignment.current = assignment;
   }, [busGuestString, guests]);
 
-  // const [domainIssues, setDomainIssues] = React.useState<[string, number][]>([["ABC", 42]]);
   const [domainIssues, setDomainIssues] = React.useState<GuestAssignment[]>([]);
   const [emptyRooms, setEmptyRooms] = React.useState<number[]>([]);
   const [overbookedRooms, setOverbookedRooms] = React.useState<number[]>([]);
@@ -96,10 +112,6 @@ function App() {
     console.log("hotelGuestAssignment", hotelGuestAssignment);
     console.log("busGuestAssignment", busGuestAssignment);
     console.log("guests", guests);
-
-    // setDomainIssues([]);
-    // setEmptyRooms([]);
-    // setOverbooking([]);
 
     const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000, true);
 
@@ -266,7 +278,6 @@ function App() {
           </Grid>
         </Grid>
       </div >
-      {/* domain image on the left, hotel image on the right */}
       <Grid container spacing={1}>
         <Grid item xs={6}>
           <img src={guests.image} alt="domain" />
@@ -275,7 +286,6 @@ function App() {
           <img src={hotel_image} alt="hotel" />
         </Grid>
       </Grid>
-      {/* {domainIssues.join(", ") === "" && emptyRooms.join(", ")} */}
       {
         domainIssues.length > 0 &&
         <div>
@@ -290,16 +300,6 @@ function App() {
               fontFamily: "xkcd",
             }}
             >
-              {/* <ul>
-                {
-                  domainIssues.splice(0, trimCount).map(([issue, room], i) =>
-                    <li key={i}>
-                      {issue} {"->"} {room}
-                    </li>
-                  )
-                }
-                {domainIssues.length > trimCount && <li>...</li>}
-              </ul> */}
               {domainIssues.splice(0, trimCount).map((assignment) => guest_to_string(guests, assignment.guest) + " -> " + assignment.room).join(", ")}
               {domainIssues.length > trimCount && ", ..."}
             </span>
@@ -326,7 +326,7 @@ function App() {
             </p>
           </div>)
           :
-          (domainIssues.length === 0 && "You did a great job! All rooms are occupied.")
+          (domainIssues.length === 0 && <div>You did a great job! All rooms are occupied.</div>)
       }
       {
         overbookedRooms.length > 0 ?
@@ -348,7 +348,7 @@ function App() {
             </p>
           </div>)
           :
-          (domainIssues.length === 0 && "You did a great job! No room is overbooked.")
+          (domainIssues.length === 0 && <div>You did a great job! No room is overbooked.</div>)
       }
 
     </div >
