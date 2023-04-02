@@ -21,7 +21,7 @@ export class EnumerationChecker extends Checker {
     this.busGuests = domain.enumerator(bound);
   }
 
-  checkCodomains(): GuestAssignment[] | "unknown" {
+  async checkCodomains(): Promise<GuestAssignment[] | "unknown"> {
     for (const hotelGuest of this.hotelGuests) {
       const room = this.hotelGuestAssignment(hotelGuest);
       if (!roomConstraint(room)) {
@@ -58,7 +58,7 @@ export class EnumerationChecker extends Checker {
     }
   }
 
-  checkEmptyRooms(many?: boolean | undefined): room_results {
+  async checkEmptyRooms(many?: boolean | undefined): Promise<room_results> {
 
     // can not check (order might be reversed) => 
     // TODO: under or over approximate?
@@ -78,7 +78,7 @@ export class EnumerationChecker extends Checker {
     return "unknown";
   }
 
-  checkOverbooking(many?: boolean | undefined): room_results {
+  async checkOverbooking(many?: boolean | undefined): Promise<room_results> {
     this.computeBookedRooms();
     const overbooked = Array.from(this.overbookedRooms!);
     return {

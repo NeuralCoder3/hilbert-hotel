@@ -77,7 +77,7 @@ export abstract class Checker {
     public hotelGuestAssignment: ((n: number) => number),
     public busGuestAssignment: ((a: any) => number)) { }
 
-  abstract checkCodomains(): GuestAssignment[] | "unknown";
-  abstract checkEmptyRooms(many?: boolean): room_results;
-  abstract checkOverbooking(many?: boolean): room_results;
+  abstract checkCodomains(): Promise<GuestAssignment[] | "unknown">;
+  abstract checkEmptyRooms(many?: boolean): Promise<room_results>;
+  abstract checkOverbooking(many?: boolean): Promise<room_results>;
 }

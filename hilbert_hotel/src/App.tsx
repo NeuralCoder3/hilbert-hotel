@@ -10,46 +10,77 @@ import empty_room_image from './img/empty.png';
 import overbooked_image from './img/overbooked.png';
 import { domainIssueText, emptyRoomText, overbookedText } from './logic/constants';
 import { SMTChecker } from './logic/smt_checker';
-import { init } from 'z3-solver';
+// import { init } from 'z3-solver';
 
 function App() {
 
 
-  useEffect(() => {
-    async function _aux() {
-      const { Context } = await init();
+  // useEffect(() => {
+  //   async function _aux() {
 
-      // console.log(Context);
-      // console.log(Context("main"));
+  //     let { Context, em } = await init();
+  //     let z3 = Context('main');
 
-      const { Solver, Int, And, ToInt } = Context('main');
+  //     const x = z3.BitVec.const('x', 256);
+  //     const y = z3.BitVec.const('y', 256);
+  //     const z = z3.BitVec.const('z', 256);
+  //     const xPlusY = x.add(y);
+  //     const xPlusZ = x.add(z);
+  //     const expr = xPlusY.mul(xPlusZ);
 
-      const x = Int.const('x');
+  //     const to_check = expr.eq(z3.Const('test', expr.sort));
 
-      console.log(Solver);
-      console.log(And);
-      console.log(x);
-      console.log(Int.val(0));
-      console.log(x.eq(0));
-      // console.log(x.ge(Int.val(0)));
-      const solver = new Solver();
-      // solver.add(And(x.ge(0), x.le(9)));
-      // console.log(await solver.check());
-      // sat
-    }
-    _aux();
-  }, []);
+  //     const solver = new z3.Solver();
+  //     solver.add(to_check);
+  //     const cr = await solver.check();
+  //     console.log(cr);
+  //     // assert(cr === 'sat');
+
+  //     const model = solver.model();
+  //     let modelStr = model.sexpr();
+  //     modelStr = modelStr.replace(/\n/g, ' ');
+  //     console.log("Model: ", modelStr);
+
+  //     // const exprs = z3.ast_from_string(modelStr);
+  //     // console.log(exprs);
+
+
+
+  //     // const { Context } = await init();
+
+  //     // // console.log(Context);
+  //     // // console.log(Context("main"));
+
+  //     // const { Solver, Int, And, ToInt } = Context('main');
+
+  //     // const x = Int.const('x');
+
+  //     // console.log(Solver);
+  //     // console.log(And);
+  //     // console.log(x);
+  //     // console.log(Int.val(0));
+  //     // console.log(x.eq(0));
+  //     // // console.log(x.ge(Int.val(0)));
+  //     // const solver = new Solver();
+  //     // // solver.add(And(x.ge(0), x.le(9)));
+  //     // // console.log(await solver.check());
+  //     // // sat
+  //   }
+  //   _aux();
+  // }, []);
 
   const get_domain = (name: string) => guest_selection.find((guest) => guest.name === name) as GuestDomain;
 
   const [guests, setGuests] = React.useState<GuestDomain>(get_domain("nat"));
   const [hotelGuestString, setHotelGuestString] = React.useState<string>('');
   const hotelGuestAssignment = React.useRef<((n: number) => number)>();
+  const hotelGuestAssignmentString = React.useRef<string>('');
   const [hotelGuestAssignmentError, setHotelGuestAssignmentError] = React.useState<boolean>(true);
 
   const [busGuestString, setBusGuestString] = React.useState<string>('');
   // a state does not work due to iteration issues for multi parameter functions (and is not the right way to do it anyway)
   const busGuestAssignment = React.useRef<((a: any) => number)>();
+  const busGuestAssignmentString = React.useRef<string>('');
   const [busGuestAssignmentError, setBusGuestAssignmentError] = React.useState<boolean>(true);
 
 
@@ -84,9 +115,11 @@ function App() {
     setHotelGuestAssignmentError(assignment === null);
     if (assignment === null) {
       hotelGuestAssignment.current = undefined;
+      hotelGuestAssignmentString.current = "";
       return;
     }
     hotelGuestAssignment.current = assignment;
+    hotelGuestAssignmentString.current = hotelGuestString;
   }, [hotelGuestString, guests]);
 
   useEffect(() => {
@@ -94,9 +127,11 @@ function App() {
     setBusGuestAssignmentError(assignment === null);
     if (assignment === null) {
       busGuestAssignment.current = undefined;
+      busGuestAssignmentString.current = "";
       return;
     }
     busGuestAssignment.current = assignment;
+    busGuestAssignmentString.current = busGuestString;
   }, [busGuestString, guests]);
 
   const [domainIssues, setDomainIssues] = React.useState<GuestAssignment[]>([]);
@@ -104,9 +139,11 @@ function App() {
   const [overbookedRooms, setOverbookedRooms] = React.useState<number[]>([]);
   const trimCount = 10;
 
-  const checkAssignment = (
+  const checkAssignment = async (
     hotelGuestAssignment: ((n: number) => number),
     busGuestAssignment: ((n: any) => number),
+    hotelGuestAssignmentString: string,
+    busGuestAssignmentString: string,
     guests: GuestDomain
   ) => {
     console.log("hotelGuestAssignment", hotelGuestAssignment);
@@ -116,7 +153,7 @@ function App() {
     const checker = new EnumerationChecker(guests, hotelGuestAssignment, busGuestAssignment, 1000, true);
 
     console.log("Check domain");
-    const invalid_rooms = checker.checkCodomains();
+    const invalid_rooms = await checker.checkCodomains();
     console.log("Domain check result: ", invalid_rooms);
     if (invalid_rooms !== "unknown" && invalid_rooms.length > 0) {
       // TODO: fix issue with strict mode not updating domain issue (and logging invalid_rooms as object of length 1 without content)
@@ -129,18 +166,24 @@ function App() {
     }
 
     console.log("Check empty rooms");
-    const empty_rooms_check = checker.checkEmptyRooms();
+    const empty_rooms_check = await checker.checkEmptyRooms();
     if (empty_rooms_check !== "unknown") {
       setEmptyRooms(empty_rooms_check.rooms);
     }
     console.log("Empty rooms check result: ", empty_rooms_check);
 
     console.log("Check overbooking");
-    const overbooking_check = checker.checkOverbooking();
+    const overbooking_check = await checker.checkOverbooking();
     if (overbooking_check !== "unknown") {
       setOverbookedRooms(overbooking_check.rooms);
     }
     console.log("Overbooking check result: ", overbooking_check);
+
+
+    const smt_checker = new SMTChecker(guests, hotelGuestAssignment, busGuestAssignment, hotelGuestAssignmentString, busGuestAssignmentString);
+    smt_checker.init().then(() => {
+      smt_checker.checkCodomains();
+    });
   };
 
   const clickAssign = () => {
@@ -152,7 +195,7 @@ function App() {
       alert("Please enter a valid assignment for the bus guests.");
       return;
     }
-    checkAssignment(hotelGuestAssignment.current, busGuestAssignment.current, guests);
+    checkAssignment(hotelGuestAssignment.current, busGuestAssignment.current, hotelGuestAssignmentString.current, busGuestAssignmentString.current, guests);
   };
 
   const renderImage = (image: string, textpositions: TextPosition[], text: string[]) => {
